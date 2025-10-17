@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Pro Video Studio — Upload · Edit · Share</title>
+
+  <!-- Google Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Bootstrap + jQuery + Swiper + AOS + GSAP (CDNs) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" rel="stylesheet" />
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#071025; --card:#0c1726; --glass:rgba(255,255,255,0.04);
+      --accent1:#7c3aed; --accent2:#06b6d4; --muted:rgba(255,255,255,0.6);
+      --radius:14px; --glass-2:rgba(255,255,255,0.02);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter, Poppins, system-ui, Arial;background:linear-gradient(180deg,#031028 0%, #071028 60%);color:#eaf2ff}
+
+    /* Top navigation */
+    .topbar{backdrop-filter:blur(6px);background:linear-gradient(90deg,rgba(255,255,255,0.02),transparent);border-bottom:1px solid rgba(255,255,255,0.03)}
+    .brand{display:flex;align-items:center;gap:.8rem}
+    .logo{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent1),var(--accent2));box-shadow:0 6px 20px rgba(8,12,30,0.7)}
+    .logo i{font-size:22px;color:white}
+
+    main{padding:2rem 2rem 4rem;max-width:1200px;margin:0 auto}
+
+    /* Hero */
+    .hero{display:grid;grid-template-columns:1fr 420px;gap:1.25rem;align-items:center;margin-bottom:1.5rem}
+    .hero-card{background:linear-gradient(180deg,var(--glass),transparent);border:1px solid rgba(255,255,255,0.03);border-radius:var(--radius);padding:1.25rem;box-shadow:0 12px 40px rgba(3,7,20,0.6)}
+    .eyebrow{font-size:.8rem;color:var(--muted);letter-spacing:.6px}
+    .hero h1{font-family:Poppins,Inter;font-weight:700;margin:.35rem 0 0;line-height:1.02}
+    .lead{color:var(--muted);margin-top:.55rem}
+
+    /* Uploader */
+    .uploader{padding:1rem;border-radius:12px;border:1px dashed rgba(255,255,255,0.04);min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem}
+    .uploader input[type=file]{display:none}
+    .btn-file{background:linear-gradient(90deg,var(--accent1),var(--accent2));border:none}
+
+    /* Library grid */
+    .library{margin-top:1.25rem}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+    .card-media{background:linear-gradient(180deg,rgba(0,0,0,0.25),transparent);border-radius:10px;overflow:hidden;position:relative}
+    .card-media video{width:100%;height:100%;object-fit:cover;display:block}
+    .meta{padding:.6rem}
+
+    /* Editor */
+    .editor{display:flex;gap:1rem;flex-wrap:wrap}
+    .editor .left{flex:1 1 640px}
+    .editor .right{flex:0 1 320px}
+
+    /* Controls */
+    .controls .progress{height:8px;border-radius:8px;background:linear-gradient(90deg,rgba(255,255,255,0.03),transparent)}
+
+    /* Footer */
+    footer{opacity:.9;margin-top:2rem}
+
+    /* Floating toggle */
+    .fab{position:fixed;right:18px;bottom:18px;border-radius:999px;padding:12px 14px;background:linear-gradient(90deg,var(--accent1),var(--accent2));box-shadow:0 12px 30px rgba(10,10,20,0.6);z-index:999}
+
+    /* Responsive & Media queries */
+    @media(max-width:1000px){.hero{grid-template-columns:1fr 340px}}
+    @media(max-width:900px){.hero{grid-template-columns:1fr} .grid{grid-template-columns:repeat(2,1fr)} .editor .left{flex-basis:100%}}
+    @media(max-width:560px){main{padding:1rem}.grid{grid-template-columns:1fr} .hero-card{padding:.9rem} .logo{width:40px;height:40px}}
+
+    /* Fancy typed underline */
+    .fancy{position:relative;display:inline-block}
+    .fancy:after{content:"";position:absolute;left:0;bottom:-6px;height:4px;width:100%;background:linear-gradient(90deg,var(--accent2),var(--accent1));border-radius:6px;opacity:.9;transform-origin:left;transform:scaleX(0);transition:transform .6s cubic-bezier(.2,.9,.3,1)}
+    .fancy.show:after{transform:scaleX(1)}
+
+    /* subtle card hover */\    
+    .card-media:hover{transform:translateY(-6px);transition:transform .35s}
+
+  </style>
+</head>
+<body>
+
+  <!-- Canvas background (animated particles + gradient) -->
+  <canvas id="bgCanvas" style="position:fixed;inset:0;z-index:-1;pointer-events:none"></canvas>
+
+  <nav class="navbar topbar py-3 px-3">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+      <div class="brand">
+        <div class="logo"><i class="fa-solid fa-film"></i></div>
+        <div>
+          <div style="font-size:.85rem;color:var(--muted)">Pro Video Studio</div>
+          <div style="font-weight:700">Upload · Edit · Share</div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 align-items-center">
+        <div class="d-none d-md-flex align-items-center gap-2">
+          <input id="searchInput" class="form-control form-control-sm" placeholder="Search videos..." style="min-width:220px">
+          <button id="newUpload" class="btn btn-sm btn-file">New Upload <i class="fa-solid fa-cloud-arrow-up ms-2"></i></button>
+        </div>
+        <button class="btn btn-outline-light btn-sm" id="sidebarToggle"><i class="fa-solid fa-sliders"></i></button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-card" data-aos="fade-right">
+        <div class="eyebrow">Studio Dashboard</div>
+        <h1><span class="fancy" id="typed">Professional Video Uploader & Quick Editor</span></h1>
+        <p class="lead">A responsive, beautiful uploader with live preview, quick editing tools, sliders, tags and a polished UI ready for GitHub & Netlify.</p>
+
+        <div class="d-flex gap-2 mt-3">
+          <button class="btn btn-primary" id="goUpload">Get Started</button>
+          <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#helperModal">How it works</button>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-6 mt-3">
+            <div class="p-2" style="background:var(--glass);border-radius:10px">Uploads <div class="h4 mb-0">12</div></div>
+          </div>
+          <div class="col-6 mt-3">
+            <div class="p-2" style="background:var(--glass);border-radius:10px">Storage <div class="h4 mb-0">1.2GB</div></div>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <div class="swiper-container hero-swiper">
+            <div class="swiper-wrapper">
+              <div class="swiper-slide" style="display:flex;gap:.6rem;align-items:center"><i class="fa-solid fa-check fa-2x"></i> Seamless drag & drop</div>
+              <div class="swiper-slide" style="display:flex;gap:.6rem;align-items:center"><i class="fa-solid fa-magic fa-2x"></i> Animated UI components</div>
+              <div class="swiper-slide" style="display:flex;gap:.6rem;align-items:center"><i class="fa-solid fa-wand-magic-sparkles fa-2x"></i> Quick snapshot</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: uploader card & preview -->
+      <aside class="hero-card" data-aos="fade-left">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div><strong>Upload Center</strong><div style="font-size:.8rem;color:var(--muted)">Drag, drop or choose file</div></div>
+          <div class="text-muted" id="quota">Used 1.2GB / 5GB</div>
+        </div>
+
+        <div class="uploader" id="dropArea">
+          <i class="fa-solid fa-cloud-arrow-up fa-3x"></i>
+          <div id="dropText">Drop video here or <label class="btn btn-sm btn-outline-light mb-0" for="fileElem" style="cursor:pointer">Choose file</label></div>
+          <input type="file" id="fileElem" accept="video/*">
+
+          <div class="w-100 mt-2" style="display:flex;gap:.5rem">
+            <input id="inputTitle" class="form-control form-control-sm" placeholder="Title">
+            <select id="inputCat" class="form-select form-select-sm" style="width:140px">
+              <option>Tutorial</option>
+              <option>Music</option>
+              <option>Vlog</option>
+            </select>
+          </div>
+
+          <div class="w-100 mt-2" style="display:flex;gap:.5rem">
+            <button id="uploadStart" class="btn btn-file flex-grow-1">Start Upload</button>
+            <button id="previewBtnSmall" class="btn btn-outline-light">Preview</button>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <div class="controls">
+            <div class="d-flex align-items-center justify-content-between mb-1"><small class="text-muted">Upload queue</small><small class="text-muted">0/3</small></div>
+            <div class="progress">
+              <div id="uploadProgress" class="progress-bar progress-bar-striped" role="progressbar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- LIBRARY + FILTERS -->
+    <section class="library" data-aos="fade-up">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 style="margin:0">My Library</h3>
+        <div class="d-flex gap-2 align-items-center">
+          <select id="filterCat" class="form-select form-select-sm" style="width:160px">
+            <option value="all">All</option>
+            <option>Tutorial</option>
+            <option>Music</option>
+            <option>Vlog</option>
+          </select>
+          <button id="clearAll" class="btn btn-sm btn-outline-light">Clear</button>
+        </div>
+      </div>
+
+      <div class="grid" id="mediaGrid">
+        <!-- cards injected by JS -->
+      </div>
+
+      <!-- Pagination / load more -->
+      <div class="text-center mt-3"><button id="loadMore" class="btn btn-sm btn-outline-light">Load more</button></div>
+    </section>
+
+    <!-- EDITOR SECTION -->
+    <section class="mt-4 editor" data-aos="fade-up">
+      <div class="hero-card left">
+        <div class="d-flex justify-content-between align-items-center mb-2"><strong>Quick Editor</strong><div class="text-muted">Trim • Snapshot • Export</div></div>
+        <div style="background:#041027;padding:10px;border-radius:10px">
+          <video id="editorVideo" controls style="width:100%;border-radius:8px;height:360px;background:#000"></video>
+        </div>
+        <div class="d-flex gap-2 mt-2">
+          <button id="trimBtn2" class="btn btn-sm btn-outline-light">Trim</button>
+          <button id="snapshotBtn2" class="btn btn-sm btn-outline-light">Snapshot</button>
+          <button id="exportBtn" class="btn btn-sm btn-primary">Export (mock)</button>
+        </div>
+
+        <div class="mt-3">
+          <small class="text-muted">Tip: Snapshots are saved to browser memory and can be downloaded.</small>
+          <div id="snapshotList" class="mt-2 d-flex gap-2 flex-wrap"></div>
+        </div>
+      </div>
+
+      <div class="hero-card right">
+        <div class="d-flex justify-content-between align-items-center mb-2"><strong>Inspector</strong><div class="text-muted">Video metadata</div></div>
+        <div class="meta">
+          <div><small class="text-muted">Title</small><div id="metaTitle" style="font-weight:600">—</div></div>
+          <div class="mt-2"><small class="text-muted">Category</small><div id="metaCat">—</div></div>
+          <div class="mt-2"><small class="text-muted">Duration</small><div id="metaDur">—</div></div>
+        </div>
+
+        <div class="mt-3">
+          <small class="text-muted">Apply quick effects</small>
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn btn-sm btn-outline-light applyEffect" data-effect="fade">Fade</button>
+            <button class="btn btn-sm btn-outline-light applyEffect" data-effect="bw">B/W</button>
+            <button class="btn btn-sm btn-outline-light applyEffect" data-effect="vibrant">Vibrant</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="text-center text-muted py-4">Made for GitHub & Netlify • Pro Video Studio • &copy; 2025</footer>
+  </main>
+
+  <!-- Floating action -->
+  <button class="fab" id="openUploader"><i class="fa-solid fa-plus"></i></button>
+
+  <!-- Helper modal -->
+  <div class="modal fade" id="helperModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark text-light">
+        <div class="modal-header"><h5 class="modal-title">How it works</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><p>Drag or pick a video, add title & category, start the (mock) upload. Library stores videos in browser for preview. Editor provides snapshots and trimming simulation.</p></div>
+        <div class="modal-footer"><button class="btn btn-outline-light" data-bs-dismiss="modal">Close</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="upload-box">
+<h4 class="mb-3">Upload Your Video</h4>
+<input type="file" id="fileInput" accept="video/*">
+<label for="fileInput"><i class="fa fa-upload"></i> Choose Video</label>
+<video id="preview" controls></video>
+</div>
+<script>
+$('#fileInput').on('change',function(e){
+const file=e.target.files[0];
+if(file){
+const url=URL.createObjectURL(file);
+const v=$('#preview');
+v.attr('src',url);
+v.show();
+}
+});
+
+
+    // --- Canvas animated background ---
+    const canvas=document.getElementById('bgCanvas');const ctx=canvas.getContext('2d');let W,H;function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}resize();addEventListener('resize',resize);
+    const particles=[];for(let i=0;i<140;i++){particles.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.8+0.3,dx:(Math.random()-0.5)*0.6,dy:(Math.random()-0.5)*0.4})}
+    function drawBg(){ctx.clearRect(0,0,W,H);const grad=ctx.createLinearGradient(0,0,W,H);grad.addColorStop(0,'rgba(7,16,37,0.8)');grad.addColorStop(1,'rgba(3,6,15,0.9)');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+      for(const p of particles){p.x+=p.dx;p.y+=p.dy;if(p.x>W+20)p.x=-20;if(p.x<-20)p.x=W+20;if(p.y>H+20)p.y=-20;if(p.y<-20)p.y=H+20;ctx.beginPath();ctx.fillStyle='rgba(124,58,237,0.12)';ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}
+      requestAnimationFrame(drawBg);
+    }
+    drawBg();
+
+    // --- Init libs ---
+    AOS.init({duration:700,once:true});
+    const heroSwiper=new Swiper('.hero-swiper',{loop:true,autoplay:{delay:2600}});
+
+    // --- typed underline animation ---
+    setTimeout(()=>document.getElementById('typed').classList.add('show'),200);
+    gsap.from('.hero-card',{y:20,opacity:0,stagger:.12,duration:.8});
+
+    // --- Utilities & Storage-based library (mock backend) ---
+    const fileElem=document.getElementById('fileElem');const dropArea=document.getElementById('dropArea');const mediaGrid=document.getElementById('mediaGrid');const uploadStart=document.getElementById('uploadStart');const editorVideo=document.getElementById('editorVideo');const metaTitle=document.getElementById('metaTitle');const metaCat=document.getElementById('metaCat');const metaDur=document.getElementById('metaDur');const snapshotList=document.getElementById('snapshotList');
+
+    let currentFile=null;let library=JSON.parse(localStorage.getItem('pv_library')||'[]');function saveLibrary(){localStorage.setItem('pv_library',JSON.stringify(library))}
+
+    function renderGrid(){mediaGrid.innerHTML='';if(library.length===0){mediaGrid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted)">No videos yet — upload one</div>';return}
+      library.forEach((it,idx)=>{const card=document.createElement('div');card.className='card-media';card.innerHTML=`<div style="height:150px;overflow:hidden;border-radius:8px"><video src="${it.url}" muted loop playsinline></video></div><div class="meta"><strong style="display:block">${it.title}</strong><small class="text-muted">${it.category} • ${it.size}</small><div class="mt-2 d-flex gap-2"><button class="btn btn-sm btn-outline-light playBtn" data-idx="${idx}"><i class="fa-solid fa-play"></i></button><button class="btn btn-sm btn-outline-light editBtn" data-idx="${idx}"><i class="fa-solid fa-pen"></i></button></div></div>`;mediaGrid.appendChild(card);
+        const v=card.querySelector('video');v.addEventListener('mouseenter',()=>v.play());v.addEventListener('mouseleave',()=>v.pause());
+      })}
+
+    renderGrid();
+
+    // Drag & drop
+    ['dragenter','dragover'].forEach(e=>dropArea.addEventListener(e,ev=>{ev.preventDefault();dropArea.style.borderColor='rgba(124,58,237,0.8)'}));['dragleave','drop'].forEach(e=>dropArea.addEventListener(e,ev=>{ev.preventDefault();dropArea.style.borderColor='rgba(255,255,255,0.04)'}));
+    dropArea.addEventListener('drop',ev=>{const f=ev.dataTransfer.files[0];if(f)handleFile(f)});
+    fileElem.addEventListener('change',e=>{const f=e.target.files[0];if(f)handleFile(f)});
+    $('#newUpload, #openUploader, #goUpload').on('click',()=>fileElem.click());
+
+    function handleFile(file){currentFile=file;const url=URL.createObjectURL(file);$('#dropText').text(file.name);$('#inputTitle').val(file.name.replace(/\.[^/.]+$/,'')).focus();
+      // populate inspector preview
+      editorVideo.src=url;metaTitle.innerText=file.name;metaCat.innerText=$('#inputCat').val();metaDur.innerText='—';
+      // get duration when loaded
+      editorVideo.onloadedmetadata=()=>{metaDur.innerText=new Date(editorVideo.duration*1000).toISOString().substr(11,8)}
+    }
+
+    // Simulated upload with progress
+    $('#uploadStart').on('click',()=>{
+      if(!currentFile){alert('Choose a video first');return}
+      const size=(currentFile.size/1024/1024).toFixed(2)+' MB';
+      let prog=0;$('#uploadProgress').css('width','0%');const t=setInterval(()=>{prog+=Math.random()*12;$('#uploadProgress').css('width',Math.min(prog,100)+'%');if(prog>99){clearInterval(t);const obj={title:$('#inputTitle').val()||currentFile.name,category:$('#inputCat').val(),url:URL.createObjectURL(currentFile),size:size};library.unshift(obj);saveLibrary();renderGrid();currentFile=null;$('#dropText').text('Drop video here or Choose file');$('#fileElem').val('');alert('Upload complete (mock)')}} ,200);
+    });
+
+    // Grid buttons (play/edit)
+    mediaGrid.addEventListener('click',e=>{const p=e.target.closest('.playBtn');if(p){const idx=p.dataset.idx;const it=library[idx];editorVideo.src=it.url;metaTitle.innerText=it.title;metaCat.innerText=it.category;metaDur.innerText='—';editorVideo.onloadedmetadata=()=>metaDur.innerText=new Date(editorVideo.duration*1000).toISOString().substr(11,8);window.scrollTo({top:document.querySelector('#editorVideo').offsetTop-60,behavior:'smooth'})}
+      const ed=e.target.closest('.editBtn');if(ed){const idx=ed.dataset.idx;const it=library[idx];const newTitle=prompt('Rename video',it.title);if(newTitle!==null){it.title=newTitle;saveLibrary();renderGrid()}}});
+
+    // Search & filter
+    $('#searchInput').on('input',function(){const q=this.value.toLowerCase();library.forEach((it,i)=>{const card=mediaGrid.children[i];if(it.title.toLowerCase().includes(q))card.style.display='block';else card.style.display='none'})});
+    $('#filterCat').on('change',function(){const v=this.value;library.forEach((it,i)=>{const card=mediaGrid.children[i];card.style.display=(v==='all'||it.category===v)?'block':'none'})});
+    $('#clearAll').on('click',()=>{library=[];saveLibrary();renderGrid()});
+
+    // Snapshot
+    $('#snapshotBtn2').on('click',()=>{if(!editorVideo.src){alert('Load a video first');return}const cvs=document.createElement('canvas');cvs.width=editorVideo.videoWidth;cvs.height=editorVideo.videoHeight;const cctx=cvs.getContext('2d');cctx.drawImage(editorVideo,0,0,cvs.width,cvs.height);const img=document.createElement('img');img.src=cvs.toDataURL('image/png');img.style.height='80px';img.style.borderRadius='8px';img.style.cursor='pointer';snapshotList.appendChild(img);img.addEventListener('click',()=>{const a=document.createElement('a');a.href=img.src;a.download='snapshot.png';a.click()})});
+
+    // Trim (simple seek simulation)
+    $('#trimBtn2').on('click',()=>{if(!editorVideo.src){alert('Load a video first');return}const s=prompt('Start (sec)','0');const e=prompt('End (sec)','5');if(s!==null&&e!==null){editorVideo.currentTime=parseFloat(s);alert('Trim applied locally (simulation)')}});
+
+    // Export (mock)
+    $('#exportBtn').on('click',()=>{alert('Export simulated: video processed and ready to download (mock).')});
+
+    // small UI interactions
+    $('#previewBtnSmall').on('click',()=>{if(editorVideo.src){editorVideo.requestPictureInPicture().catch(()=>alert('Picture-in-Picture not available'))}else alert('No video loaded')});
+    $('.applyEffect').on('click',function(){const eff=$(this).data('effect');if(eff==='bw'){editorVideo.style.filter='grayscale(1)'}else if(eff==='fade'){editorVideo.style.transition='filter .5s';editorVideo.style.filter='brightness(.7)'}else if(eff==='vibrant'){editorVideo.style.filter='saturate(1.8)'}});
+
+    // Save typed title when changed
+    $('#inputTitle').on('change',function(){metaTitle.innerText=this.value});
+
+    // keyboard: space to play/pause editorVideo when focused
+    window.addEventListener('keydown',e=>{if(e.code==='Space'&&document.activeElement.tagName!=='INPUT'){e.preventDefault();editorVideo.paused?editorVideo.play():editorVideo.pause()}});
+
+    // show some initial library mock items
+    if(library.length===0){const sample=['/assets/sample1.mp4','/assets/sample2.mp4']; // placeholders - user will replace
+      // don't push real files, just keep library empty until upload
+    }
+
+    // final animations
+    gsap.from('.grid > div',{y:20,opacity:0,stagger:.06,duration:.7});
+  </script>
+</body>
+</html>
